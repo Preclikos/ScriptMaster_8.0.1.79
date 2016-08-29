@@ -1,0 +1,476 @@
+/**Main App**/
+window.ScriptEditor = function(config,$)	{
+	var _config = config;
+	var _checkForLink = function(entry){
+		var se = this;
+		if(typeof(entry)=="object"&&typeof(entry.link)!="undefined"){
+			var extract = config.NodeDataArray[entry.link]
+			return se[extract.fName](extract.args);
+		}else{
+			return new Promise(function(resolve,reject){resolve(entry)});
+		}
+	}
+	
+	var _buildServerUrl = function(args){
+		var entity = args[0];
+		var id = args[1];
+		var clientURL = Xrm.Page.context.getClientUrl()
+		//TODO: finish this
+	}
+	
+	/// <summary>
+	/// Procces Math statement
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0]	:	operator {String} [+,-,*,/,all Math methods]
+	/// @args[1]	:	left side value {Number,Link,Anything}
+	/// @args[2]	:	right side value {Number,Link,Anything}
+	/// </param>
+	var proccesMathStatement = function(args){
+		var se = this;
+
+		return new Promise(function(resolve,reject){
+			var a = args[0];
+			var b = se._checkForLink(args[1]);
+			var c = se._checkForLink(args[2]);
+			Promise.all([b,c]).then(values=>{
+				var left = values[0];
+				var right = values[1];
+				var result;
+				if(a.length === 1){
+					switch(a) {
+						case "+":
+							result = left + right;
+							console.log("returning proccesMathStatement result: "+result);
+							resolve(result);
+							break;
+						case "-":
+							result = left - right;
+							console.log("returning proccesMathStatement result: "+result);
+							resolve(result);
+							break;
+						case "*":
+							result = left * right;
+							console.log("returning proccesMathStatement result: "+result);
+							resolve(result);
+							break;
+						case "/":
+							result = left / right;
+							console.log("returning proccesMathStatement result: "+result);
+							resolve(result);
+							break;
+					}
+				}else if(a.length > 1){
+					result = Math[a](left,right);
+					console.log("returning proccesMathStatement: "+a+" with result: "+result);
+					resolve(result);
+				}
+			});
+		});
+	}
+	
+	/// <summary>
+	/// Relay value from argument to return value
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0] : value {String,Link,Number}
+	/// </param>
+	var relayValue = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[0]);
+			Promise.all([a]).then(values=>{
+				resolve(values[0]);
+			});
+		});
+	}
+	
+	/// <summary>
+	/// Gets field value in current form
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0] : field name {String,Link}
+	/// </param>
+	var getFormFieldValue = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[0]);
+			Promise.all([a]).then(values=>{
+				var fieldName = values[0]
+				console.log("getting value of field: "+fieldName);
+				var val = Xrm.Page.getAttribute(fieldName).getValue() || "";
+				resolve(val);
+			});
+		});
+	}
+	
+	/// <summary>
+	/// Sets field value in current form
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0]	:	field name {String,Link}
+	/// @args[1]	:	field value {String,Link}
+	/// </param>
+	//TODO: type check, value conversions
+	var setFormFieldValue = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[0]);
+			var b = se._checkForLink(args[1]);
+			Promise.all([a,b]).then(values=>{
+				var fieldName = values[0];
+				var newValue = values[1];
+				console.log("setting field: "+fieldName+" to value: "+newValue);
+				Xrm.Page.getAttribute(fieldName).setValue(newValue);
+				resolve(true);
+			});
+		});
+	}
+	
+	/// <summary>
+	/// Procces IF statement
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0]	:	operator {String}
+	/// @args[1]	:	left side value {Anything}
+	/// @args[2]	:	right side value {Anything}
+	/// </param>
+	var proccesIfStatement = function(args){
+		var se = this;
+
+		return new Promise(function(resolve,reject){
+			var a = args[0];
+			var b = se._checkForLink(args[1]);
+			var c = se._checkForLink(args[2]);
+			Promise.all([b,c]).then(values=>{
+				var left = values[0];
+				var right = values[1];
+				switch(a) {
+					case "==":
+						if(left == right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case "===":
+						if(left === right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case "!=":
+						if(left != right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case "!==":
+						if(left !== right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case ">":
+						if(left > right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case ">=":
+						if(left >= right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case "<":
+						if(left < right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+					case "<=":
+						if(left <= right){
+							console.log("returning proccesIfStatement result: TRUE");
+							resolve(true);
+							break;
+						}else{
+							console.log("returning proccesIfStatement result: FALSE");
+							resolve(false);
+							break;
+						}
+				}
+			});
+		});
+	}
+	
+	/// <summary>
+	/// Create Dialog
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0]	:	type {String} [message,loading,confirm,form]
+	/// @args[1]	:	title {String,Link}
+	/// @args[2]	:	message {String,Link}
+	/// @args[3]	:	timeout {Int,Boolean}
+	/// @args[4]	:	??? {Anything}
+	/// </param>
+	var createDialog = function(args){
+		var se = this;
+		//get jQuery, jQueryUI, css...
+		//type = ["confirm","message","form"]
+		se["_generateDialog_"+args[0]](args);
+	};
+	
+	var _generateDialog_message = function(args){
+		//check if this
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[1]);	//title
+			var b = se._checkForLink(args[2]);	//message
+			var c = args[3] //timeout close OR false for manual
+			Promise.all([a,b]).then(values=>{
+				var title = values[0];
+				var message = values[1];
+				
+				var dialogHTML = '<div id="ScriptDialog" title="'+title+'">';
+				dialogHTML += '<div class="ui-widget-content">'+message;
+				dialogHTML += '</div></div>';
+				var dialog = $(dialogHTML, window.top.document).dialog({
+					autoOpen: true,
+					height: "auto",
+					width: "auto",
+					modal: true,
+					buttons:{
+						Ok: function(){
+							dialog.dialog( "close" );
+						}
+					},
+					close: function(){
+						console.log("dialog close");
+						dialog.dialog( "destroy" );
+						resolve(true);
+					},
+					create: function(){
+						if(c && typeof(c)=="number"){
+							setTimeout(function(){try{dialog.dialog( "close" );}catch(err){console.log(err);}},c);
+						}
+					}
+				});
+				dialog.parent("div").position({
+					my: "center top",
+					at: "center bottom",
+					of: window.document
+				});
+			})
+		});
+	};
+	
+	var _generateDialog_confirm = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[1]);	//title
+			var b = se._checkForLink(args[2]);	//message
+			var c = args[3] //timeout close OR false for manual
+			Promise.all([a,b]).then(values=>{
+				var title = values[0];
+				var message = values[1];
+				
+				var dialogHTML = '<div id="ScriptDialog" title="'+title+'">';
+				dialogHTML += '<div class="ui-widget">'+message;
+				dialogHTML += '</div></div>';
+				var dialog = $(dialogHTML, window.top.document).dialog({
+					autoOpen: true,
+					height: "auto",
+					width: "auto",
+					modal: true,
+					buttons:{
+						Ok: function(){
+							dialog.dialog( "close" );
+							resolve(true);
+						},
+						Cancel: function(){
+							dialog.dialog( "close" );
+							resolve(false);
+						}
+					},
+					close: function(){
+						console.log("dialog close");
+						dialog.dialog( "destroy" );
+						//resolve(true);
+					},
+					create: function(){
+						if(c && typeof(c)=="number"){
+							setTimeout(function(){try{dialog.dialog( "close" );}catch(err){console.log(err);}},c);
+						}
+					}
+				});
+				dialog.parent("div").position({
+					my: "center top",
+					at: "center bottom",
+					of: window.document
+				});
+			})
+		});
+	};
+	
+	var retrieveSingleEA = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var req = new XMLHttpRequest();
+			req.open("GET", Xrm.Page.context.getClientUrl() + "/api/data/v8.0/accounts()", true);
+			req.setRequestHeader("OData-MaxVersion", "4.0");
+			req.setRequestHeader("OData-Version", "4.0");
+			req.setRequestHeader("Accept", "application/json");
+			req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+			req.setRequestHeader("Prefer", "odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\"");
+			req.onreadystatechange = function () {
+				if (this.readyState === 4) {
+					req.onreadystatechange = null;
+					if (this.status === 200) {
+						resolve(JSON.parse(this.response));
+					}
+					else {
+						reject(this);
+					}
+				}
+			};
+			req.send();
+		});
+	}
+	
+	var combineTheDamnData = function(args){
+		var a = this._checkForLink(args[0]);
+		var b = this._checkForLink(args[1]);
+		console.log("combining data: "+a+" with data: "+b);
+		return a+"::+::"+b;
+	}
+	
+	var runFunctionByName = function(args){
+		var a = args[0];
+		var fcfg = window.ScriptEditor.loadedConfigs.filter(function(c){return c._config.FunctionName===a});
+		if(fcfg.length===1){
+			fcfg[0].run(0);
+		}
+		return true;
+	}
+	
+	//TODO: assign to OnLoad	//DONE
+	//TODO: udelat funkci na pousteni funkci z configu.
+	//TODO: vratit v constructoru i config jako object	//DONE
+	//TODO: funkce na set background color	//DONE
+	var setFormFieldColor = function(args){
+		var se = this;
+		return new Promise(function(resolve,reject){
+			var a = se._checkForLink(args[0]);
+			var b = se._checkForLink(args[1]);
+			Promise.all([a,b]).then(values=>{
+				var fieldName = values[0];
+				var color = values[1];
+				console.log("setting field: "+fieldName+" to color: "+color);
+				$("*[data-attributename='"+fieldName+"']",window.parent.document)[0].style.background = color;
+				resolve(true);
+			});
+		});
+	};
+	
+	var assign = function(){
+		var se = this;
+		//assign to correct event/field/button/whatever...
+		if(config.Target.FieldName === "onLoad"){	//onLoad run right away
+			se.run(0);
+		}else{	//addOnChange to Field
+			var fieldName = config.Target.FieldName || "";
+			var eventName = "addOnChange";
+			var control = Xrm.Page.ui.controls.getByName(fieldName);
+			var turboFormControl = Xrm.Page.getAttribute(fieldName);
+			//TODO: decide logic, other cases
+			turboFormControl[eventName](function(){
+				se.run(0);
+			});
+			//if init run is true
+			// if(config.Target.InitRun === true){
+				// se.run(0);
+			// }
+			
+		}
+		
+		//get ui
+		//var controlUi = $("*[data-attributename='"+fieldName+"']");
+		////$("td[id*='"+fieldName+"']").children("div");
+		////$("td[id*='"+fieldName+"']").closest("tr");
+		////$("*[data-attributename='"+fieldName+"']")
+		//
+	}
+	
+	var run = function (key){
+		var se = this;
+		if(!key){
+			key = 0;
+		}
+		var current = config.NodeDataArray.filter(function(n){return n.key === key})[0];
+		
+		se[current.fName](current.args).then(function(data){
+		//TODO: check current.useReturnValue == true ? data as args : default
+			if(current.nextKey != null){
+				if(current.nextKey.length == 2){
+					if(data === true){
+						se.run(current.nextKey[0]);
+					}else{
+						se.run(current.nextKey[1]);
+					}
+				}else if(current.nextKey.length == 1){ //only other possibility 
+					se.run(current.nextKey[0]);
+				}
+			}else{
+				return Promise.resolve();
+			}
+		});
+	}
+	
+	return {
+		_config				:	_config,
+		_checkForLink		:	_checkForLink,
+		_buildServerUrl		:	_buildServerUrl,
+		_generateDialog_message: _generateDialog_message,
+		_generateDialog_confirm: _generateDialog_confirm,
+		getFormFieldValue	:	getFormFieldValue,
+		setFormFieldValue	:	setFormFieldValue,
+		retrieveSingleEA	:	retrieveSingleEA,
+		proccesIfStatement	:	proccesIfStatement,
+		combineTheDamnData	:	combineTheDamnData,
+		runFunctionByName	:	runFunctionByName,
+		run					:	run,
+		assign				:	assign,
+		createDialog		:	createDialog,
+		proccesMathStatement:	proccesMathStatement,
+		relayValue			:	relayValue,
+		setFormFieldColor	:	setFormFieldColor
+	};
+};
