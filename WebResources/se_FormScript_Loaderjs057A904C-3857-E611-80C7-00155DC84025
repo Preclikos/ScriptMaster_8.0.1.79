@@ -33,6 +33,7 @@ var scriptsConfig = {
 		}
 	},
 	paths: {
+	"q": "se_q",
 	"jquery": "se_jquery2.2.4.min",
 	"jquery-ui": "se_jquery.ui1.11.4",
 	"loadJQueryCSS" : "se_loadJQueryCSS",
@@ -58,9 +59,11 @@ if (!window['requirejs']) {
 /***/
 })();
 function OnFormScriptLoad(){
-	requirejs(['jquery','jquery-ui','loadJQueryCSS','ScriptEditor_Main'], function( JQ ) {
+	requirejs(['jquery','q','jquery-ui','loadJQueryCSS','ScriptEditor_Main'], function( JQ ) {
 		console.log( JQ ) // OK
-		//now I should have private jQuery with jqUI and loaded CSS everywhere as well as registred window.ScriptEditor inside iframes
+		var Q = require('q');
+		console.log(Q); // OK
+		//now I should have private jQuery with jqUI, Q and loaded CSS everywhere as well as registred window.ScriptEditor inside iframes
 		
 		window.ScriptEditor.loadedConfigs = [];
 		//get correct configs
@@ -72,7 +75,7 @@ function OnFormScriptLoad(){
 			var configs = JSON.parse(data);
 			//var configs = data;
 			for(var i = 0; i<configs.length; i++){
-				window.ScriptEditor.loadedConfigs.push(new ScriptEditor(configs[i],JQ));
+				window.ScriptEditor.loadedConfigs.push(new ScriptEditor(configs[i],JQ,Q));
 			}
 			//TODO: separate and assign by correct order from configs (?Or Not)
 			for(var j = 0; j<window.ScriptEditor.loadedConfigs.length;j++){

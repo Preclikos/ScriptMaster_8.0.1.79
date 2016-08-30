@@ -1,5 +1,5 @@
 /**Main App**/
-window.ScriptEditor = function(config,$)	{
+window.ScriptEditor = function(config,$,Q)	{
 	var _config = config;
 	var _checkForLink = function(entry){
 		var se = this;
@@ -7,14 +7,22 @@ window.ScriptEditor = function(config,$)	{
 			var extract = config.NodeDataArray[entry.link]
 			return se[extract.fName](extract.args);
 		}else{
-			return new Promise(function(resolve,reject){resolve(entry)});
+			return new Q.Promise(function(resolve,reject){resolve(entry)});
 		}
 	}
 	
 	var _buildServerUrl = function(args){
 		var entity = args[0];
 		var id = args[1];
+		var returnURL = "";
 		var clientURL = Xrm.Page.context.getClientUrl()
+		var version = Xrm.Page.context.getVersion().substring(0,3);
+		if(parseFloat(version)>=8){
+			returnURL = clientURL+"/api/data/v"+version+"/";
+		}else{
+			returnURL = clientURL+"/"
+		}
+		return returnURL;
 		//TODO: finish this
 	}
 	
@@ -29,11 +37,11 @@ window.ScriptEditor = function(config,$)	{
 	var proccesMathStatement = function(args){
 		var se = this;
 
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = args[0];
 			var b = se._checkForLink(args[1]);
 			var c = se._checkForLink(args[2]);
-			Promise.all([b,c]).then(values=>{
+			Q.Promise.all([b,c]).then(function(values){
 				var left = values[0];
 				var right = values[1];
 				var result;
@@ -77,9 +85,9 @@ window.ScriptEditor = function(config,$)	{
 	/// </param>
 	var relayValue = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[0]);
-			Promise.all([a]).then(values=>{
+			Q.Promise.all([a]).then(function(values){
 				resolve(values[0]);
 			});
 		});
@@ -93,9 +101,9 @@ window.ScriptEditor = function(config,$)	{
 	/// </param>
 	var getFormFieldValue = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[0]);
-			Promise.all([a]).then(values=>{
+			Q.Promise.all([a]).then(function(values){
 				var fieldName = values[0]
 				console.log("getting value of field: "+fieldName);
 				var val = Xrm.Page.getAttribute(fieldName).getValue() || "";
@@ -114,10 +122,10 @@ window.ScriptEditor = function(config,$)	{
 	//TODO: type check, value conversions
 	var setFormFieldValue = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[0]);
 			var b = se._checkForLink(args[1]);
-			Promise.all([a,b]).then(values=>{
+			Q.Promise.all([a,b]).then(function(values){
 				var fieldName = values[0];
 				var newValue = values[1];
 				console.log("setting field: "+fieldName+" to value: "+newValue);
@@ -138,11 +146,11 @@ window.ScriptEditor = function(config,$)	{
 	var proccesIfStatement = function(args){
 		var se = this;
 
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = args[0];
 			var b = se._checkForLink(args[1]);
 			var c = se._checkForLink(args[2]);
-			Promise.all([b,c]).then(values=>{
+			Q.Promise.all([b,c]).then(function(values){
 				var left = values[0];
 				var right = values[1];
 				switch(a) {
@@ -251,11 +259,11 @@ window.ScriptEditor = function(config,$)	{
 	var _generateDialog_message = function(args){
 		//check if this
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[1]);	//title
 			var b = se._checkForLink(args[2]);	//message
 			var c = args[3] //timeout close OR false for manual
-			Promise.all([a,b]).then(values=>{
+			Q.Promise.all([a,b]).then(function(values){
 				var title = values[0];
 				var message = values[1];
 				
@@ -294,11 +302,11 @@ window.ScriptEditor = function(config,$)	{
 	
 	var _generateDialog_confirm = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[1]);	//title
 			var b = se._checkForLink(args[2]);	//message
 			var c = args[3] //timeout close OR false for manual
-			Promise.all([a,b]).then(values=>{
+			Q.Promise.all([a,b]).then(function(values){
 				var title = values[0];
 				var message = values[1];
 				
@@ -342,7 +350,7 @@ window.ScriptEditor = function(config,$)	{
 	
 	var retrieveSingleEA = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var req = new XMLHttpRequest();
 			req.open("GET", Xrm.Page.context.getClientUrl() + "/api/data/v8.0/accounts()", true);
 			req.setRequestHeader("OData-MaxVersion", "4.0");
@@ -381,16 +389,19 @@ window.ScriptEditor = function(config,$)	{
 		return true;
 	}
 	
-	//TODO: assign to OnLoad	//DONE
-	//TODO: udelat funkci na pousteni funkci z configu.
-	//TODO: vratit v constructoru i config jako object	//DONE
-	//TODO: funkce na set background color	//DONE
+	/// <summary>
+	/// Sets field background color in current form
+	/// </summary>
+	/// <param name="args" type="array" mayBeNull="false" optional="false" >
+	/// @args[0]	:	field name {String,Link}
+	/// @args[1]	:	field color {String,Link}
+	/// </param>
 	var setFormFieldColor = function(args){
 		var se = this;
-		return new Promise(function(resolve,reject){
+		return new Q.Promise(function(resolve,reject){
 			var a = se._checkForLink(args[0]);
 			var b = se._checkForLink(args[1]);
-			Promise.all([a,b]).then(values=>{
+			Q.Promise.all([a,b]).then(function(values){
 				var fieldName = values[0];
 				var color = values[1];
 				console.log("setting field: "+fieldName+" to color: "+color);
@@ -449,7 +460,7 @@ window.ScriptEditor = function(config,$)	{
 					se.run(current.nextKey[0]);
 				}
 			}else{
-				return Promise.resolve();
+				return Q.Promise.resolve();
 			}
 		});
 	}

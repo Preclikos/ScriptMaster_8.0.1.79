@@ -180,6 +180,18 @@
       <IsHidden>0</IsHidden>
       <FileName>/WebResources/se_imagesui_icons_ffffff_256x240png6C7ECBD3-9C5F-E611-80C7-00155DC84025</FileName>
     </WebResource>
+    <WebResource>
+      <WebResourceId>{e8e7d7bf-7f6e-e611-80c7-00155dc84025}</WebResourceId>
+      <Name>se_q.js</Name>
+      <DisplayName>q.js</DisplayName>
+      <WebResourceType>3</WebResourceType>
+      <IntroducedVersion>0.0.0004</IntroducedVersion>
+      <IsEnabledForMobileClient>0</IsEnabledForMobileClient>
+      <IsCustomizable>1</IsCustomizable>
+      <CanBeDeleted>1</CanBeDeleted>
+      <IsHidden>0</IsHidden>
+      <FileName>/WebResources/se_qjsE8E7D7BF-7F6E-E611-80C7-00155DC84025</FileName>
+    </WebResource>
   </WebResources>
   <Languages>
     <Language>1033</Language>
